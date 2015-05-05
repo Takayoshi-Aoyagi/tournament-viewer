@@ -1,14 +1,8 @@
+var async = require('async');
 var fs = require('fs');
 var util = require('util');
 
 var Convertor = function () {};
-
-Convertor.getJSON = function (path) {
-    var text, json;
-    text = fs.readFileSync(path);
-    json = JSON.parse(text);
-    return json;
-};
 
 Convertor.padding = function (players) {
     var size = 4;
@@ -60,41 +54,49 @@ Convertor.buildTournament = function (pairs) {
     return paired[0];
 };
 
-Convertor.executeByCategory = function (category) {
-    var inFilePath = util.format('data/json/categories/%s.json', category.name);
-    var json = Convertor.getJSON(inFilePath);
-    var classes = json.data;
-    var dir = 'data/json/tournament';
-    if (!fs.existsSync(dir)) {
-	fs.mkdirSync(dir);
-	fs.mkdirSync(dir + '/massogi');
-	fs.mkdirSync(dir + '/tul');
-    }
-    Object.keys(classes).forEach(function (className) {
-	var outFilePath = util.format('data/json/tournament/%s/%s.json', category.id, className);
-	var players = classes[className];
+Convertor.executeByCollection = function (colname, callback) {
+    console.log(colname);
+    var names = colname.split('_');
+    var categoryId = names[0];
+    var classId = names[1];
+    var outFilePath = util.format('data/json/tournament/%s/%s.json', categoryId, classId);
+    var collection = global.db.collection(colname);
+    collection.findOne(function (err, json) {
+	if (err) {
+	    callback(err);
+	    return;
+	}
+	var players = json.players;
+	if (!players) {
+	    console.log(json);
+	}
 	var num = Convertor.padding(players);
 	var tournament = Convertor.buildTournament(players);
+	JSON.stringify(players, null, 2);
 	fs.writeFileSync(outFilePath, JSON.stringify(tournament, null, 2));
+	callback(null);
     });
 };
 
-Convertor.execute = function () {
-    var array = [
-	{
-	    name: "マッソギ",
-	    id: "massogi"
-	},
-	{
-	    name: "トゥル",
-	    id: "tul"
+Convertor.execute = function (callback) {
+    console.log('Convertor.execute');
+    global.db.listCollections().toArray(function (err, collections) {
+	if (err) {
+	    callback(err);
+	    return;
 	}
-    ];
-    array.forEach(function (category) {
-	Convertor.executeByCategory(category);
+	async.each(collections, function (collection, next) {
+	    if (collection.name === 'system.indexes') {
+		next();
+		return;
+	    }
+	    Convertor.executeByCollection(collection.name, function (err) {
+		next();
+	    });		
+	}, function (err) {
+	    callback(err);
+	});
     });
 };
-
-//Convertor.execute();
 
 module.exports = Convertor;

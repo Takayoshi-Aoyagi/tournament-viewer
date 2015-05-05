@@ -1,7 +1,9 @@
+var async = require('async');
 var fs = require('fs');
 var util = require('util');
 var child_process = require('child_process');
 var express = require('express');
+var JSON2Mongo = require('./json2mongo.js');
 var Convertor = require('./convertor.js');
 
 var router = express.Router();
@@ -43,16 +45,32 @@ router.post('/uploads', function(req, res) {
 });
 
 router.post('/generateData', function(req, res) {
-    var cmd = "java -jar EntryListGeneratorMain.jar uploads";
-    console.log(cmd);
-    child_process.exec(cmd, function (err, stdout, stderr) {
+    async.waterfall([
+	function (cb) {
+	    var cmd = "java -jar EntryListGeneratorMain.jar uploads";
+	    console.log(cmd);
+	    child_process.exec(cmd, function (err, stdout, stderr) {
+		cb(err);
+	    });
+	},
+	function (cb) {
+	    JSON2Mongo.execute(function (err) {
+		cb(err);
+	    });
+	},
+	function (cb) {
+	    console.log('Convertor');
+	    Convertor.execute(function (err) {
+		console.log('Convertor-');
+		cb();
+	    });
+	}
+    ], function (err) {
 	if (err) {
 	    res.status(500).send(err);
 	    return;
-	} else {
-	    Convertor.execute();
-	    res.status(200);
 	}
+	res.status(200);
     });
 
 });

@@ -13,6 +13,15 @@ var multer = require('multer');
 
 var app = express();
 
+var MongoClient = require('mongodb').MongoClient,
+    assert = require('assert');
+var url = 'mongodb://localhost:27017/tournament';
+MongoClient.connect(url, function(err, db) {
+    assert.equal(null, err);
+    console.log("Connected correctly to server");
+    global.db = db;
+});
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
