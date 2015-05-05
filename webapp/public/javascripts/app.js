@@ -48,88 +48,9 @@ var app = app || {};
 	app.dataGenerateButton = new app.DataGenerateButton();
     };
 
-    function draw (classId) {
-	var getUrlVars = function(){
-	    var vars = {};
-	    var param = location.search.substring(1).split('&');
-	    for (var i = 0; i < param.length; i++) {
-		var keySearch = param[i].search(/=/);
-		var key = '';
-		if(keySearch != -1) key = param[i].slice(0, keySearch);
-		var val = param[i].slice(param[i].indexOf('=', 0) + 1);
-		if(key != '') vars[key] = decodeURI(val);
-	    }
-	    return vars;
-	};
-
-	var id = getUrlVars().id;
-	console.log(id)
-	var margin = {top: 0, right: 320, bottom: 0, left: 0},
-	    width = 960 - margin.left - margin.right,
-	    height = 500 - margin.top - margin.bottom;
-
-	var tree = d3.layout.tree()
-	//.separation(function(a, b) { return a.parent === b.parent ? 1 : .5; })
-	    .separation(function(a, b) { return a.children === b.children ? 1 : .5; })
-	//.children(function(d) { return d.parents; })
-	    .size([height, width]);
-
-	d3.select("body").select("svg").remove();
-	var svg = d3.select("body").append("svg")
-	    .attr("width", width + margin.left + margin.right)
-	    .attr("height", height + margin.top + margin.bottom)
-	    .append("g")
-	    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-	d3.json("/players/massogi/" + classId, function(json) {
-	    var nodes = tree.nodes(json);
-
-	    var link = svg.selectAll(".link")
-		.data(tree.links(nodes))
-		.enter().append("path")
-		.attr("class", "link")
-		.attr("d", elbow);
-
-	    var node = svg.selectAll(".node")
-		.data(nodes)
-		.enter().append("g")
-		.attr("class", "node")
-		.attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; })
-
-	    node.append("text")
-		.attr("class", "name")
-		.attr("x", 8)
-		.attr("y", -6)
-		.text(function(d) {
-		    if (d.name) {
-			return d.name + ' (' + d.kana + ')';
-		    } else {
-			return "";
-		    }
-		});
-
-	    node.append("text")
-		.attr("x", 8)
-		.attr("y", 8)
-		.attr("dy", ".71em")
-		.attr("class", "about lifespan")
-		.text(function(d) { return d.dojo; });
-
-	    node.append("text")
-		.attr("x", 8)
-		.attr("y", 8)
-		.attr("dy", "1.86em")
-		.attr("class", "about location")
-		.text(function(d) { return ""; });
-	});
-
-	function elbow(d, i) {
-	    return "M" + d.source.y + "," + d.source.x
-		+ "H" + d.target.y + "V" + d.target.x
-		+ (d.target.children ? "" : "h" + margin.right);
-	}
-    }
-
+    /**
+     * 階級選択のプルダウンメニュー
+     */
     app.ClassSelectorView = Backbone.View.extend({
 
 	el: '#class_selector_view',
@@ -155,16 +76,130 @@ var app = app || {};
 	    $("#class_selector").change(function () {
 		var val = $(this).val();
 		console.log(val);
-		draw(val);
+		app.classId = val;
+		app.tournamentView.draw(val);
+
 	    });
+	    $("#class_selector").val(4).change();
 	}
     });
-    
+
+    /**
+     * トーナメント
+     */
+    app.TournamentView = Backbone.View.extend({
+	
+	draw: function (classId) {
+	    this.classId = classId;
+	    this.render();
+	},
+	    
+	render: function () {
+	    var margin = {top: 0, right: 320, bottom: 0, left: 0},
+		width = 960 - margin.left - margin.right,
+		height = 500 - margin.top - margin.bottom;
+
+	    var tree = d3.layout.tree()
+	    //.separation(function(a, b) { return a.parent === b.parent ? 1 : .5; })
+		.separation(function(a, b) { return a.children === b.children ? 1 : .5; })
+		.size([height, width]);
+
+	    d3.select("body").select("svg").remove();
+	    var svg = d3.select("body").append("svg")
+		.attr("width", width + margin.left + margin.right)
+		.attr("height", height + margin.top + margin.bottom)
+		.append("g")
+		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+	    d3.json("/players/massogi/" + this.classId, function(json) {
+		var nodes = tree.nodes(json);
+
+		var link = svg.selectAll(".link")
+		    .data(tree.links(nodes))
+		    .enter().append("path")
+		    .attr("class", "link")
+		    .attr("d", elbow);
+
+		var node = svg.selectAll(".node")
+		    .data(nodes)
+		    .enter().append("g")
+		    .attr("class", "node")
+		    .attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; })
+
+		node.append("text")
+		    .attr("class", "name")
+		    .attr("x", 8)
+		    .attr("y", -6)
+		    .text(function(d) {
+			if (d.name) {
+			    return d.name + ' (' + d.kana + ')';
+			} else {
+			    return "";
+			}
+		    });
+
+		node.append("text")
+		    .attr("x", 8)
+		    .attr("y", 8)
+		    .attr("dy", ".71em")
+		    .attr("class", "about lifespan")
+		    .text(function(d) { return d.dojo; });
+
+		node.append("text")
+		    .attr("x", 8)
+		    .attr("y", 8)
+		    .attr("dy", "1.86em")
+		    .attr("class", "about location")
+		    .text(function(d) { return ""; });
+
+		node.on("click", function (d, i) {
+		    if (!app.prev) {
+			app.prev = {
+			    d: d,
+			    i: i
+			};
+			d3.select(this).style("fill", "red");
+		    } else if (app.prev.i === i) {
+			app.prev = undefined;
+			d3.select(this).style("fill", "black");
+		    } else {
+			swap(app.prev.i, i);
+		    }
+		    console.log(node);
+		    console.log(d);
+		    console.log(i);
+		});
+	    });
+
+	    function swap(a, b) {
+		var data = {
+		    swap1: a,
+		    swap2: b
+		};
+		var params = {
+		    url: sprintf('players/%s/%s/swap', 'massogi', app.classId),
+		    contentTpe: 'application/json',
+		    data: data
+		};
+		AjaxUtils.post(params, function (err, json) {
+		    console.log(json);
+		});
+	    }
+	    
+	    function elbow(d, i) {
+		return "M" + d.source.y + "," + d.source.x
+		    + "H" + d.target.y + "V" + d.target.x
+		    + (d.target.children ? "" : "h" + margin.right);
+	    }
+	}
+    });
+
     app.init = function () {
 	var params = {
 	    url: "/players/categories"
 	};
 	AjaxUtils.get(params, function (err, json) {
+	    app.tournamentView = new app.TournamentView();
 	    app.classSelectorView = new app.ClassSelectorView(json['massogi']);
 	    app.classSelectorView.render();
 	});

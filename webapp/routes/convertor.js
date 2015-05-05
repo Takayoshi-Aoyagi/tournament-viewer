@@ -74,10 +74,6 @@ Convertor.executeByCategory = function (category) {
 	var outFilePath = util.format('data/json/tournament/%s/%s.json', category.id, className);
 	var players = classes[className];
 	var num = Convertor.padding(players);
-	// shuffle players
-	players.sort(function () {
-	    return Math.random()-.5;
-	});
 	var tournament = Convertor.buildTournament(players);
 	fs.writeFileSync(outFilePath, JSON.stringify(tournament, null, 2));
     });

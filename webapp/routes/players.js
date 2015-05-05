@@ -24,8 +24,8 @@ router.get('/categories', function (req, res, next) {
 });
 
 router.get('/:category/:id', function(req, res, next) {
-    var category = req.param('category'),
-	id = req.param('id'),
+    var category = req.params['category'],
+	id = req.params['id'],
 	clazz,
 	path;
     clazz = categories[category][id];
@@ -34,6 +34,16 @@ router.get('/:category/:id', function(req, res, next) {
 	var json = JSON.parse(data);
 	res.status(200).send(json);
     });
+});
+
+router.post('/:category/:id/swap', function(req, res, next) {
+    var category = req.params['category'],
+	id = req.params['id'],
+	swap1 = req.body.swap1,
+    	swap2 = req.body.swap2;
+    console.log(req.body);
+    console.log(util.format("swapping: %s %s %s %s", category, id, swap1, swap2));
+    res.status(200);
 });
 
 module.exports = router;
