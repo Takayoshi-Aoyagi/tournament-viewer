@@ -59,18 +59,23 @@ Convertor.buildTournament = function (pairs) {
     return paired[0];
 };
 
-var json = Convertor.getJSON('../data/マッソギ.json');
-var classes = json.data;
-//var className = '小学５・６年　男子の部';
-Object.keys(classes).forEach(function (className) {
-    var players = classes[className];
-    var num = Convertor.padding(players);
-    // shuffle players
-    players.sort(function () {
-	return Math.random()-.5;
+Convertor.execute = function () {
+    var json = Convertor.getJSON('data/json/categories/マッソギ.json');
+    var classes = json.data;
+    //var className = '小学５・６年　男子の部';
+    Object.keys(classes).forEach(function (className) {
+	var players = classes[className];
+	var num = Convertor.padding(players);
+	// shuffle players
+	players.sort(function () {
+	    return Math.random()-.5;
+	});
+	var tournament = Convertor.buildTournament(players);
+	//console.log(JSON.stringify(tournament, null, 2));
+	fs.writeFileSync('../webapp/data/' + className + '.json', JSON.stringify(tournament, null, 2));
     });
-    var tournament = Convertor.buildTournament(players);
-    //console.log(JSON.stringify(tournament, null, 2));
-    fs.writeFileSync('../webapp/data/' + className + '.json', JSON.stringify(tournament, null, 2));
-});
+};
 
+//Convertor.execute();
+
+module.exports = Convertor;

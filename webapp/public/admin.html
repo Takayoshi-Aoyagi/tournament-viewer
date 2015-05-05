@@ -1,0 +1,33 @@
+<html>
+  <head>
+  </head>
+  <body>
+    <h1>Admin Page</h1>
+    <div>
+      <h3>道場別入力ファイル一覧</h3>
+      <div id="input_files_view"></div>
+    </div>
+    <div id="upload_view">
+      <h3>ファイルアップロード</h3>
+      <form action="/admin/uploads" method="post" enctype="multipart/form-data">
+	<input type="file" name="thumbnail" size="30" multiple>
+	<input type="submit" value="送信">
+      </form>
+    </div>
+    <div>
+      <h3>トーナメントデータ生成</h3>
+      <button id="data_generate_button">データ生成</button>
+    </div>
+
+    <script src="bower_components/jquery/dist/jquery.min.js"></script>
+    <script src="bower_components/ajax-utils/ajax_utils.js"></script>
+    <script src="bower_components/underscore/underscore-min.js"></script>
+    <script src="bower_components/backbone/backbone.js"></script>
+    <script src="javascripts/app.js"></script>
+    <script>
+      $(document).ready(function () {
+        app.initAdmin();
+      });
+    </script>
+  </body>
+</html>

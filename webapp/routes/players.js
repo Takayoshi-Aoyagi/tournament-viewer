@@ -55,15 +55,17 @@ router.get('/', function(req, res, next) {
     res.send(json);
 });
 
-var tournaments = [];
-var dir = 'data';
-var files = fs.readdirSync(dir);
-files.forEach(function (file) {
-    var json = JSON.parse(fs.readFileSync(dir + '/' + file));
-    tournaments.push(json);
-});
-
 router.get('/:id', function(req, res, next) {
+    var tournaments = [];
+    var dir = 'data';
+    var files = fs.readdirSync(dir);
+    files.forEach(function (file) {
+	var path = dir + '/' + file;
+	console.log(path);
+	var json = JSON.parse(fs.readFileSync(path));
+	tournaments.push(json);
+    });
+    
     var id = req.param('id');
     res.send(tournaments[id]);
 });
