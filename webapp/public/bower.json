@@ -16,6 +16,8 @@
   "dependencies": {
     "backbone": "~1.1.2",
     "jquery": "~2.1.4",
-    "ajax-utils": "*"
+    "ajax-utils": "*",
+    "d3": "~3.5.5",
+    "sprintf": "~1.0.2"
   }
 }

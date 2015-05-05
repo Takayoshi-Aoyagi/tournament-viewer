@@ -1,73 +1,39 @@
 var fs = require('fs');
+var util = require('util');
 var express = require('express');
 var router = express.Router();
 
-var json = {
-    "name": "Clifford Shanks",
-    "born": 1862,
-    "died": 1906,
-    "location": "Petersburg, VA",
-    "children": [
-	{
-	    "name": "James Shanks",
-	    "born": 1831,
-	    "died": 1884,
-	    "location": "Petersburg, VA",
-	    "children": [
-		{
-		    "name": "Robert Shanks",
-		    "born": 1781,
-		    "died": 1871,
-		    "location": "Ireland/Petersburg, VA"
-		},
-		{
-		    "name": "Elizabeth Shanks",
-		    "born": 1795,
-		    "died": 1871,
-		    "location": "Ireland/Petersburg, VA"
-		}
-	    ]
-	},
-	{
-	    "name": "Ann Emily Brown",
-	    "born": 1826,
-	    "died": 1866,
-	    "location": "Brunswick/Petersburg, VA",
-	    "children": [
-		{
-		    "name": "Henry Brown",
-		    "born": 1792,
-		    "died": 1845,
-		    "location": "Montgomery, NC"
-		},
-		{
-		    "name": "Sarah Houchins",
-		    "born": 1793,
-		    "died": 1882,
-		    "location": "Montgomery, NC"
-		}
-	    ]
-	}
-    ]
-}
-	
-router.get('/', function(req, res, next) {
-    res.send(json);
+var categories = {};
+var base = 'data/json/tournament';
+var dirs = fs.readdirSync(base);
+dirs.forEach(function (category) {
+    var path = util.format('%s/%s', base, category);
+    var files = fs.readdirSync(path);
+    var json = {};
+    files.forEach(function (file, i) {
+	json[i] = {
+	    id: i,
+	    name: file.split("\.")[0]
+	};
+    });
+    categories[category] = json;
 });
 
-router.get('/:id', function(req, res, next) {
-    var tournaments = [];
-    var dir = 'data';
-    var files = fs.readdirSync(dir);
-    files.forEach(function (file) {
-	var path = dir + '/' + file;
-	console.log(path);
-	var json = JSON.parse(fs.readFileSync(path));
-	tournaments.push(json);
+router.get('/categories', function (req, res, next) {
+    res.status(200).send(categories);
+});
+
+router.get('/:category/:id', function(req, res, next) {
+    var category = req.param('category'),
+	id = req.param('id'),
+	clazz,
+	path;
+    clazz = categories[category][id];
+    path = util.format('data/json/tournament/%s/%s.json', category, clazz.name);
+    fs.readFile(path, function (err, data) {
+	var json = JSON.parse(data);
+	res.status(200).send(json);
     });
-    
-    var id = req.param('id');
-    res.send(tournaments[id]);
 });
 
 module.exports = router;
