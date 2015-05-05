@@ -26,8 +26,8 @@ JSON2Mongo.padding = function (players) {
 	numPadding = size - num;
 	for (i = 0; i < numPadding; i++) {
 	    json = { 
-		kana: '',
-		name: '',
+		kana: '---',
+		name: '---',
 	    }
 	    players.push(json);
 	}

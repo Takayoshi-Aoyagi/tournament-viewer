@@ -4,7 +4,9 @@ var async = require('async');
 var fs = require('fs');
 var util = require('util');
 var express = require('express');
+var Convertor = require('./convertor');
 var router = express.Router();
+
 
 var categories = undefined;
 
@@ -67,7 +69,38 @@ router.post('/:category/:id/swap', function(req, res, next) {
 	swap1 = req.body.swap1,
     	swap2 = req.body.swap2;
     console.log(util.format("swapping: %s %s %s %s", category, id, swap1, swap2));
-    res.status(200);
+    var colname = util.format('%s_%s', category, id);
+    var collection = global.db.collection(colname);
+    collection.findOne(function (err, doc) {
+	if (err) {
+	    res.status(500).send(err);
+	}
+	console.log(doc);
+	var tmp = doc.players[swap1];
+	doc.players[swap1] = doc.players[swap2];
+	doc.players[swap2] = tmp;
+	// swap order
+	tmp = doc.players[swap1].order;
+	doc.players[swap1].order = doc.players[swap2].order;
+	doc.players[swap2].order = tmp;
+	console.log(doc);
+	collection.update({}, doc, function (err, doc) {
+	    console.log(doc);
+	    if (err) {
+		res.status(500).send(err);
+		return;
+	    }
+	    Convertor.execute(function (err) {
+		console.log("hoge");
+		console.log(err);
+		if (err) {
+		    res.status(500).send(err);
+		    return;
+		}
+		res.status(200).send("");
+	    });
+	});
+    });
 });
 
 module.exports = router;

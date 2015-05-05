@@ -78,7 +78,7 @@ var app = app || {};
 		console.log(val);
 		app.classId = val;
 		app.tournamentView.draw(val);
-
+		app.prev = undefined;
 	    });
 	    $("#class_selector").val(4).change();
 	}
@@ -163,15 +163,19 @@ var app = app || {};
 			app.prev = undefined;
 			d3.select(this).style("fill", "black");
 		    } else {
-			swap(app.prev.i, i);
+			swap(app.prev.d.order, d.order, function (err, json) {
+			    app.prev = undefined;
+			    if (err) {
+				console.log(err);
+			    } else {
+				app.tournamentView.draw(app.classId);
+			    }
+			});
 		    }
-		    console.log(node);
-		    console.log(d);
-		    console.log(i);
 		});
 	    });
 
-	    function swap(a, b) {
+	    function swap(a, b, callback) {
 		var data = {
 		    swap1: a,
 		    swap2: b
@@ -182,7 +186,7 @@ var app = app || {};
 		    data: data
 		};
 		AjaxUtils.post(params, function (err, json) {
-		    console.log(json);
+		    callback(err, json);
 		});
 	    }
 	    
