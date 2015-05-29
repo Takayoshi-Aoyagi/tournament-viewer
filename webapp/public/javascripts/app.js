@@ -81,7 +81,7 @@ var app = app || {};
 		var val = $(this).val();
 		console.log(val);
 		app.classId = val;
-		app.tournamentView.draw(val);
+		app.tournamentView[that.type].draw(val);
 		app.prev = undefined;
 	    });
 	    $("#" + that.type + "_class_selector").val(4).change();
@@ -96,12 +96,16 @@ var app = app || {};
 	draw: function (classId) {
 		var that = this;
 	    this.classId = classId;
-	    d3.json("/players/massogi/" + this.classId, function(json) {
+	    d3.json("/players/" + that.type + "/" + this.classId, function(json) {
 		    that.json = json;
 		    that.render();
 		});
 	},
 	    
+	initialize: function (type) {
+		this.type = type;
+	    },
+
 	render: function () {
 		    var that = this;
 	    var margin = {top: 0, right: 320, bottom: 0, left: 0},
@@ -113,7 +117,7 @@ var app = app || {};
 		.size([height, width]);
 
 	    d3.select("body").select("svg").remove();
-	    var svg = d3.select("#t_massogi").append("svg")
+	    var svg = d3.select("#t_" + that.type).append("svg")
 		.attr("width", width + margin.left + margin.right)
 		.attr("height", height + margin.top + margin.bottom)
 		.append("g")
@@ -189,7 +193,8 @@ var app = app || {};
 		    swap2: b
 		};
 		var params = {
-		    url: sprintf('players/%s/%s/swap', 'massogi', app.classId),
+		    //url: sprintf('players/%s/%s/swap', 'massogi', app.classId),
+		    url: sprintf('players/%s/%s/swap', that.type, app.classId),
 		    contentTpe: 'application/json',
 		    data: data
 		};
@@ -211,9 +216,12 @@ var app = app || {};
 	    url: "/players/categories"
 	};
 	AjaxUtils.get(params, function (err, json) {
-	    app.tournamentView = new app.TournamentView();
+		app.tournamentView = {};
+	    app.tournamentView.tul = new app.TournamentView("tul");
+	    app.tournamentView.massogi = new app.TournamentView("massogi");
 	    app.tulClassSelectorView = new app.ClassSelectorView("tul", json['tul']);
 	    app.tulClassSelectorView.render();
+
 	    app.massogiClassSelectorView = new app.ClassSelectorView("massogi", json['massogi']);
 	    app.massogiClassSelectorView.render();
 	});
