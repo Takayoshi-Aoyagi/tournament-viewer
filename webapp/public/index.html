@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
+<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
 <style>
   
   text {
@@ -23,14 +24,29 @@
 
 </style>
 <body>
-  <div id="class_selector_view"></div>
-
+  <div role="main" class="ui-content">
+    <div id="tabs" data-role="tabs">
+      <div data-role="navbar">
+        <ul>
+          <li><a href="#tul" class="ui-btn-active">トゥル</a></li>
+          <li><a href="#massogi">マッソギ</a></li>
+        </ul>
+      </div>
+      <div id="tul" class="ui-body ui-body-a">
+	<div id="tul_class_selector_view"></div>
+      </div>
+      <div id="massogi" class="ui-body ui-body-a">
+	<div id="massogi_class_selector_view"></div>
+	<div id="t_massogi"></div>
+      </div>
+    </div>
   <script src="bower_components/sprintf/dist/sprintf.min.js"></script>
   <script src="bower_components/jquery/dist/jquery.min.js"></script>
   <script src="bower_components/ajax-utils/ajax_utils.js"></script>
   <script src="bower_components/underscore/underscore-min.js"></script>
   <script src="bower_components/backbone/backbone.js"></script>
   <script src="bower_components/d3/d3.min.js"></script>
+  <script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
   <script src="javascripts/app.js"></script>
   <script>
     $(document).ready(function () {

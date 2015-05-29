@@ -53,34 +53,38 @@ var app = app || {};
      */
     app.ClassSelectorView = Backbone.View.extend({
 
-	el: '#class_selector_view',
-
-	initialize: function (json) {
-	    this.json = json
+	    initialize: function (type, json) {
+		this.type = type;
+		this.el = '#' + this.type + '_class_selector_view';
+		this.json = json;
 	},
 
 	render: function () {
 	    var that = this,
-		html = '';
-	    html += '<select id="class_selector">';
+	    html = '',
+	    hash = {
+		'tul': 'トゥル',
+		'massogi': 'マッソギ'
+	    };
+	    html += sprintf('<select name="select-choice-mini" data-mini="true" data-inline="true" id="%s_class_selector">', that.type);
 	    Object.keys(this.json).forEach(function (key) {
 		var clazz = that.json[key];
 		if (clazz.name === '×') {
 		    return;
 		}
-		html += sprintf('<option value="%s">%s</option>', clazz.id, clazz.name);
+		html += sprintf('<option value="%s">%s - %s</option>', clazz.id, hash[that.type], clazz.name);
 	    });
 	    html += '</select>';
-	    this.$el.html(html);
+	    $(this.el).html(html);
 
-	    $("#class_selector").change(function () {
+	    $("#" + that.type + "_class_selector").change(function () {
 		var val = $(this).val();
 		console.log(val);
 		app.classId = val;
 		app.tournamentView.draw(val);
 		app.prev = undefined;
 	    });
-	    $("#class_selector").val(4).change();
+	    $("#" + that.type + "_class_selector").val(4).change();
 	}
     });
 
@@ -90,29 +94,33 @@ var app = app || {};
     app.TournamentView = Backbone.View.extend({
 	
 	draw: function (classId) {
+		var that = this;
 	    this.classId = classId;
-	    this.render();
+	    d3.json("/players/massogi/" + this.classId, function(json) {
+		    that.json = json;
+		    that.render();
+		});
 	},
 	    
 	render: function () {
+		    var that = this;
 	    var margin = {top: 0, right: 320, bottom: 0, left: 0},
-		width = 960 - margin.left - margin.right,
-		height = 500 - margin.top - margin.bottom;
+		width = 860 - margin.left - margin.right,
+		height = 800 - margin.top - margin.bottom;
 
 	    var tree = d3.layout.tree()
-	    //.separation(function(a, b) { return a.parent === b.parent ? 1 : .5; })
 		.separation(function(a, b) { return a.children === b.children ? 1 : .5; })
 		.size([height, width]);
 
 	    d3.select("body").select("svg").remove();
-	    var svg = d3.select("body").append("svg")
+	    var svg = d3.select("#t_massogi").append("svg")
 		.attr("width", width + margin.left + margin.right)
 		.attr("height", height + margin.top + margin.bottom)
 		.append("g")
 		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-	    d3.json("/players/massogi/" + this.classId, function(json) {
-		var nodes = tree.nodes(json);
+
+		var nodes = tree.nodes(that.json);
 
 		var link = svg.selectAll(".link")
 		    .data(tree.links(nodes))
@@ -131,8 +139,9 @@ var app = app || {};
 		    .attr("x", 8)
 		    .attr("y", -6)
 		    .text(function(d) {
+			var dojo = d.dojo || '   '
 			if (d.name) {
-			    return d.name + ' (' + d.kana + ')';
+			    return d.name + ' (' + dojo + ')';
 			} else {
 			    return "";
 			}
@@ -143,7 +152,7 @@ var app = app || {};
 		    .attr("y", 8)
 		    .attr("dy", ".71em")
 		    .attr("class", "about lifespan")
-		    .text(function(d) { return d.dojo; });
+		    .text(function(d) { return d.kana; });
 
 		node.append("text")
 		    .attr("x", 8)
@@ -172,7 +181,6 @@ var app = app || {};
 			    }
 			});
 		    }
-		});
 	    });
 
 	    function swap(a, b, callback) {
@@ -204,8 +212,10 @@ var app = app || {};
 	};
 	AjaxUtils.get(params, function (err, json) {
 	    app.tournamentView = new app.TournamentView();
-	    app.classSelectorView = new app.ClassSelectorView(json['massogi']);
-	    app.classSelectorView.render();
+	    app.tulClassSelectorView = new app.ClassSelectorView("tul", json['tul']);
+	    app.tulClassSelectorView.render();
+	    app.massogiClassSelectorView = new app.ClassSelectorView("massogi", json['massogi']);
+	    app.massogiClassSelectorView.render();
 	});
     };
 }());
