@@ -28,8 +28,10 @@ router.post('/uploads', function(req, res) {
 	paths = [thumbnail];
     }
     paths.forEach(function (path) {
+	    console.log(path)
 	var src = './uploads/' + path.name,
 	    dst = './uploads/' + path.originalname;
+	    /*
 	fs.rename(src, dst, function(err) {
 	    if (err) {
 		throw err;
@@ -41,6 +43,8 @@ router.post('/uploads', function(req, res) {
 	    res.send('File uploaded to: ' + dst + ' - ' + path.size + ' bytes');
 	    });
 	});
+	    */
+	    res.send('File uploaded to: ' + dst + ' - ' + path.size + ' bytes');	    
     });
 });
 
@@ -50,6 +54,8 @@ router.post('/generateData', function(req, res) {
 	    var cmd = "java -jar EntryListGeneratorMain.jar uploads data/merge.json";
 	    console.log(cmd);
 	    child_process.exec(cmd, function (err, stdout, stderr) {
+		    console.log(stdout);
+		    console.log(stderr);
 		cb(err);
 	    });
 	},
@@ -62,7 +68,7 @@ router.post('/generateData', function(req, res) {
 	    console.log('Convertor');
 	    Convertor.execute(function (err) {
 		console.log('Convertor-');
-		cb();
+		cb(err);
 	    });
 	}
     ], function (err) {
