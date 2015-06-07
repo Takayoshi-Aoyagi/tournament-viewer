@@ -84,7 +84,7 @@ var app = app || {};
 		app.tournamentView[that.type].draw(val);
 		app.prev = undefined;
 	    });
-	    $("#" + that.type + "_class_selector").val(4).change();
+	    $("#" + that.type + "_class_selector").val(1).change();
 	}
     });
 
@@ -97,6 +97,25 @@ var app = app || {};
 		var that = this;
 	    this.classId = classId;
 	    d3.json("/players/" + that.type + "/" + this.classId, function(json) {
+		    var ns;
+		    try {
+			ns = d3.layout.tree().nodes(json).length;
+		    } catch (e) {
+			console.log(e)
+		    }
+		    if (ns === 3) {
+			that.baseHeight = 200;
+			that.baseWidth = 430;
+		    } else if (ns === 7) {
+			that.baseHeight = 250;
+			that.baseWidth = 630;
+		    } else if (ns === 15) {
+			that.baseHeight = 500;
+			that.baseWidth = 730;
+		    } else {
+			that.baseHeight = 800;
+			that.baseWidth = 860;
+		    }
 		    that.json = json;
 		    that.render();
 		});
@@ -108,9 +127,9 @@ var app = app || {};
 
 	render: function () {
 		    var that = this;
-	    var margin = {top: 0, right: 320, bottom: 0, left: 0},
-		width = 860 - margin.left - margin.right,
-		height = 800 - margin.top - margin.bottom;
+	    var margin = {top: 0, right: 220, bottom: 0, left: 0},
+		width = that.baseWidth - margin.left - margin.right,
+		height = that.baseHeight - margin.top - margin.bottom;
 
 	    var tree = d3.layout.tree()
 		.separation(function(a, b) { return a.children === b.children ? 1 : .5; })
@@ -143,9 +162,10 @@ var app = app || {};
 		    .attr("x", 8)
 		    .attr("y", -6)
 		    .text(function(d) {
-			var dojo = d.dojo || '   '
+			    var dojo = d.dojo || '   ',
+			    seq = d.seq || '  ';
 			if (d.name) {
-			    return d.name + ' (' + dojo + ')';
+			    return seq + '  ' + d.name + ' (' + dojo + ')';
 			} else {
 			    return "";
 			}
@@ -181,7 +201,7 @@ var app = app || {};
 			    if (err) {
 				console.log(err);
 			    } else {
-				app.tournamentView.draw(app.classId);
+				app.tournamentView[that.type].draw(app.classId);
 			    }
 			});
 		    }
@@ -224,6 +244,20 @@ var app = app || {};
 
 	    app.massogiClassSelectorView = new app.ClassSelectorView("massogi", json['massogi']);
 	    app.massogiClassSelectorView.render();
-	});
+
+	    /*
+	    $('#save_btn').click(function () {
+		    //var svgText = document.getElementById('t_massogi').innerHTML;
+		    var svgText = $('#t_massogi')[0].innerHTML;
+		    canvg('canvas', svgText);
+		    // Canvas要素取得
+		    var canvas = document.getElementById('canvas');
+		    // Blob形式に変換し、保存する
+		    canvas.toBlob(function(blob) {
+			    saveAs(blob, "graph.png");
+			}, "image/png");
+		});
+	    */
+	    });
     };
 }());

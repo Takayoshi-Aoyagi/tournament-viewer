@@ -51,7 +51,7 @@ router.post('/uploads', function(req, res) {
 router.post('/generateData', function(req, res) {
     async.waterfall([
 	function (cb) {
-	    var cmd = "java -jar EntryListGeneratorMain.jar uploads data/merge.json";
+	    var cmd = "java -jar EntryListGeneratorMain.jar uploads /home/aoyagi/tournament-viewer/webapp/data/merge.json";
 	    console.log(cmd);
 	    child_process.exec(cmd, function (err, stdout, stderr) {
 		    console.log(stdout);

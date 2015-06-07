@@ -21,6 +21,7 @@ Convertor.padding = function (players) {
 	    json = { 
 		kana: '',
 		name: '',
+		seq: ''
 	    }
 	    players.push(json);
 	}
