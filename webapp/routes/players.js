@@ -1,6 +1,7 @@
 "use strict";
 
 var async = require('async');
+var assert = require('assert');
 var fs = require('fs');
 var util = require('util');
 var express = require('express');
@@ -12,31 +13,44 @@ var categories = undefined;
 
 function getCategories(callback) {
     categories = {};
-    global.db.listCollections().toArray(function (err, collections) {
-	if (err) {
-	    callback(err);
-	    return;
-	}
-	var json = {};
-	async.eachSeries(collections, function (collection, next) {
-	    if (collection.name === 'system.indexes') {
-		next();
-		return;
-	    }
-	    var col = global.db.collection(collection.name);
-	    col.findOne(function (err, data) {
-		if (!categories[data.categoryId]) {
-		    categories[data.categoryId] = {};
-		}
-		categories[data.categoryId][data.classId] = {
-		    id: data.classId,
-		    name: data.className
-		};
-		next();
+    async.waterfall([
+        function (cb) {
+	    var MongoClient = require('mongodb').MongoClient;
+	    var url = 'mongodb://localhost:27017/tournament';
+	    MongoClient.connect(url, function(err, db) {
+		assert.equal(null, err);
+		console.log("Connected correctly to server");
+		cb(err, db);
 	    });
-	}, function (err) {
-	    callback(err);
-	});
+	},
+	function (db, cb) {
+	    db.collections(function (err, collections) {
+		cb(err, collections);
+	    });
+	},
+	function (collections, cb) {
+	    var json = {};
+	    async.eachSeries(collections, function (collection, next) {
+		if (collection.s.name === 'system.indexes') {
+		    next();
+		    return;
+		}
+		collection.findOne(function (err, data) {
+		    if (!categories[data.categoryId]) {
+			categories[data.categoryId] = {};
+		    }
+		    categories[data.categoryId][data.classId] = {
+			id: data.classId,
+			name: data.className
+		    };
+		    next();
+		});
+	    }, function (err) {
+		cb(err);
+	    });
+	}
+    ], function (err) {
+	callback(err);
     });
 }
 
@@ -57,6 +71,7 @@ router.get('/:category/:id', function(req, res, next) {
 	path;
     clazz = categories[category][id];
     path = util.format('data/json/tournament/%s/%s.json', category, clazz.id);
+    console.log(path);
     fs.readFile(path, function (err, data) {
 	var json = JSON.parse(data);
 	res.status(200).send(json);
@@ -69,37 +84,50 @@ router.post('/:category/:id/swap', function(req, res, next) {
 	swap1 = req.body.swap1,
     	swap2 = req.body.swap2;
     console.log(util.format("swapping: %s %s %s %s", category, id, swap1, swap2));
-    var colname = util.format('%s_%s', category, id);
-    var collection = global.db.collection(colname);
-    collection.findOne(function (err, doc) {
-	if (err) {
-	    res.status(500).send(err);
-	}
-	console.log(doc);
-	var tmp = doc.players[swap1];
-	doc.players[swap1] = doc.players[swap2];
-	doc.players[swap2] = tmp;
-	// swap order
-	tmp = doc.players[swap1].order;
-	doc.players[swap1].order = doc.players[swap2].order;
-	doc.players[swap2].order = tmp;
-	console.log(doc);
-	collection.update({}, doc, function (err, doc) {
-	    console.log(doc);
-	    if (err) {
-		res.status(500).send(err);
-		return;
-	    }
-	    Convertor.execute(function (err) {
-		console.log("hoge");
-		console.log(err);
-		if (err) {
-		    res.status(500).send(err);
-		    return;
-		}
-		res.status(200).send("");
+
+    async.waterfall([
+        function (cb) {
+	    var MongoClient = require('mongodb').MongoClient;
+	    var url = 'mongodb://localhost:27017/tournament';
+	    MongoClient.connect(url, function(err, db) {
+		assert.equal(null, err);
+		console.log("Connected correctly to server");
+		cb(err, db);
 	    });
-	});
+	},
+	function (db, cb) {
+	    var colname = util.format('%s_%s', category, id);
+	    var collection = db.collection(colname);
+	    collection.findOne(function (err, doc) {
+		cb(err, doc);
+	    });
+	},
+	function (doc, cb) {
+	    console.log(doc);
+	    var tmp = doc.players[swap1];
+	    doc.players[swap1] = doc.players[swap2];
+	    doc.players[swap2] = tmp;
+	    // swap order
+	    tmp = doc.players[swap1].order;
+	    doc.players[swap1].order = doc.players[swap2].order;
+	    doc.players[swap2].order = tmp;
+	    console.log(doc);
+	    collection.update({}, doc, function (err, doc) {
+		cb(err);
+	    });
+	},
+	function (cb) {
+	    Convertor.execute(function (err) {
+		cb(err);
+	    });
+	}
+    ], function (err) {
+        if (err) {
+	    console.log(err);
+	    res.status(500).send(err);
+	    return;
+	}
+	res.status(200).send("");
     });
 });
 

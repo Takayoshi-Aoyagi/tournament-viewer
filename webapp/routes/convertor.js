@@ -1,6 +1,7 @@
 var async = require('async');
 var fs = require('fs');
 var util = require('util');
+var assert = require('assert');
 
 var Convertor = function () {};
 
@@ -55,13 +56,13 @@ Convertor.buildTournament = function (pairs) {
     return paired[0];
 };
 
-Convertor.executeByCollection = function (colname, callback) {
-    console.log(colname);
-    var names = colname.split('_');
+Convertor.executeByCollection = function (collection, callback) {
+    console.log(collection.s.name);
+    var names = collection.s.name.split('_');
     var categoryId = names[0];
     var classId = names[1];
     var outFilePath = util.format('data/json/tournament/%s/%s.json', categoryId, classId);
-    var collection = global.db.collection(colname);
+    console.log(outFilePath);
     collection.findOne(function (err, json) {
 	if (err) {
 	    callback(err);
@@ -69,34 +70,54 @@ Convertor.executeByCollection = function (colname, callback) {
 	}
 	var players = json.players;
 	if (!players) {
+	    console.log("----");
 	    console.log(json);
+	} else {
+	    console.log(players)
 	}
+
 	var num = Convertor.padding(players);
 	var tournament = Convertor.buildTournament(players);
 	JSON.stringify(players, null, 2);
-	fs.writeFileSync(outFilePath, JSON.stringify(tournament, null, 2));
-	callback(null);
+	fs.writeFile(outFilePath, JSON.stringify(tournament, null, 2), function (err) {
+	    callback(err);
+	});
     });
 };
 
 Convertor.execute = function (callback) {
     console.log('Convertor.execute');
-    global.db.listCollections().toArray(function (err, collections) {
-	if (err) {
-	    callback(err);
-	    return;
+    async.waterfall([
+        function (cb) {
+	    var MongoClient = require('mongodb').MongoClient;
+	    var url = 'mongodb://localhost:27017/tournament';
+	    MongoClient.connect(url, function(err, db) {
+		assert.equal(null, err);
+		console.log("Connected correctly to server");
+		cb(err, db);
+	    });
+	},
+	function (db, cb) {
+	    db.collections(function (err, collections) {
+		cb(err, collections);
+	    });
+	},
+	function (collections, cb) {
+	    async.eachSeries(collections, function (collection, next) {
+		if (collection.s.name === 'system.indexes') {
+		    next();
+		    return;
+		}
+		Convertor.executeByCollection(collection, function (err) {
+		    next();
+		});
+	    }, function (err) {
+		cb(err);
+	    });
 	}
-	async.each(collections, function (collection, next) {
-	    if (collection.name === 'system.indexes') {
-		next();
-		return;
-	    }
-	    Convertor.executeByCollection(collection.name, function (err) {
-		next();
-	    });		
-	}, function (err) {
-	    callback(err);
-	});
+    ], function (err) {
+	console.log('Convertor.execute END');
+	callback(err);
     });
 };
 

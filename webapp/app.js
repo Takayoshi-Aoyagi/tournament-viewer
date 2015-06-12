@@ -18,9 +18,12 @@ var MongoClient = require('mongodb').MongoClient,
 var url = 'mongodb://localhost:27017/tournament';
 MongoClient.connect(url, function(err, db) {
     assert.equal(null, err);
-    console.log("Connected correctly to server");
+    if (err) {
+	console.log(err);
+    } else {
+	console.log("Connected correctly to server");
+    }
     global.db = db;
-});
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -70,6 +73,6 @@ app.use(function(err, req, res, next) {
     error: {}
   });
 });
-
+});
 
 module.exports = app;

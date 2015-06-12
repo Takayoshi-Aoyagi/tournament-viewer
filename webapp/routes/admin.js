@@ -51,10 +51,21 @@ router.post('/uploads', function(req, res) {
 router.post('/generateData', function(req, res) {
     async.waterfall([
 	function (cb) {
+	    var paths = ['data/json/categories', 'data/json/tournament/massogi', 'data/json/tournament/tul'];
+	    paths.forEach(function (path) {
+	        var files;
+		files = fs.readdirSync(path);
+		files.forEach(function (file) {
+		    fs.unlinkSync(util.format("%s/%s", path, file));
+		});
+	    });
+	    cb();
+	},
+	function (cb) {
 	    var cmd = "java -jar EntryListGeneratorMain.jar uploads /home/aoyagi/tournament-viewer/webapp/data/merge.json";
 	    console.log(cmd);
 	    child_process.exec(cmd, function (err, stdout, stderr) {
-		    console.log(stdout);
+		    //console.log(stdout);
 		    console.log(stderr);
 		cb(err);
 	    });
@@ -73,6 +84,7 @@ router.post('/generateData', function(req, res) {
 	}
     ], function (err) {
 	if (err) {
+	    console.log(err);
 	    res.status(500).send(err);
 	    return;
 	}
