@@ -99,10 +99,10 @@ router.post('/:category/:id/swap', function(req, res, next) {
 	    var colname = util.format('%s_%s', category, id);
 	    var collection = db.collection(colname);
 	    collection.findOne(function (err, doc) {
-		cb(err, doc);
+		cb(err, collection, doc);
 	    });
 	},
-	function (doc, cb) {
+	function (collection, doc, cb) {
 	    console.log(doc);
 	    var tmp = doc.players[swap1];
 	    doc.players[swap1] = doc.players[swap2];
